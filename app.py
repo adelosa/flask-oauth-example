@@ -43,6 +43,19 @@ app.config['OAUTH2_PROVIDERS'] = {
         },
         'scopes': ['user:email'],
     },
+    # Entra OAuth 2.0 documentation
+    # https://learn.microsoft.com/en-us/entra/identity-platform/v2-protocols
+    'entra': {
+        'client_id': os.environ.get('ENTRA_CLIENT_ID'),
+        'client_secret': os.environ.get('ENTRA_CLIENT_SECRET'),
+        'authorize_url': f'https://login.microsoftonline.com/{ os.environ.get("ENTRA_CLIENT_ISSUER") }/oauth2/v2.0/authorize',
+        'token_url': f'https://login.microsoftonline.com/{ os.environ.get("ENTRA_CLIENT_ISSUER") }/oauth2/v2.0/token',
+        'userinfo': {
+            'url': 'https://graph.microsoft.com/oidc/userinfo',
+            'email': lambda json: json['email'],
+        },
+        'scopes': ['https://graph.microsoft.com/user.read'],
+    }
 }
 
 db = SQLAlchemy(app)
@@ -147,6 +160,7 @@ def oauth2_callback(provider):
     })
     if response.status_code != 200:
         abort(401)
+    print(response.json())
     email = provider_data['userinfo']['email'](response.json())
 
     # find or create the user in the database
